@@ -1,0 +1,23 @@
+{
+  "name": "gulp-crane",
+  "version": "0.0.1",
+  "description": "Gulp plugin to working with docker images",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ltines/gulp-crane.git"
+  },
+  "keywords": [
+    "gulp",
+    "docker"
+  ],
+  "author": "Lukas Tines <lukas.tines@outlook.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ltines/gulp-crane/issues"
+  },
+  "homepage": "https://github.com/ltines/gulp-crane#readme"
+}
