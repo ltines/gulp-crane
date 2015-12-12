@@ -62,12 +62,13 @@ function buildImage(opts) {
             if (code !== 0) {
                 self.emit('error', new PluginError(PLUGIN_NAME, 'Docker exited with code ' + code + ': ' + errorLog));
             }
+            // make sure the file goes through the next gulp plugin
+            self.push(file);
+            // tell the stream engine that we are done with this file
+            cb();
         });
 
-        // make sure the file goes through the next gulp plugin
-        self.push(file);
-        // tell the stream engine that we are done with this file
-        cb();
+
     });
     
     return stream;
