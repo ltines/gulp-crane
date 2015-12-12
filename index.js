@@ -20,13 +20,38 @@ function buildCmdLine(args, opts)
     return args;
 }
 
+function runDocker(args, debug) {
+    debug = debug || false;
+    
+    return new Promise(function (resolve, reject) {
+        var proc = spawn('docker', args);
+        var errorLog = '';
+        proc.stderr.on('data', function (data) {
+            errorLog += data;
+        });
+        
+        if (debug) {
+            process.stdout.write('Running docker with args: ' + args.join(' ') + '\n');
+        }
+
+        proc.on('close', function (code) {
+            if (code !== 0) {
+                reject('Docker exited with code ' + code + ': ' + errorLog);
+            }
+            resolve();
+        });
+    });
+    
+}
+
 function buildImage(opts) {
     var stream = through.obj(function (file, enc, cb) {
         var self = this;
         opts = opts || {};
         var buildOpts = {
             file: file.path,
-            quiet: true
+            quiet: true,
+            rm: true
         };
 
         for (var k in opts) {
@@ -38,40 +63,31 @@ function buildImage(opts) {
                     buildOpts['tag'] = opts['pull'];
                 case 'no-cache':
                     buildOpts['no-cache'] = opts['no-cache'];
+                case 'rm':
+                    buildOpts['rm'] = opts['rm'];
             }
         }
 
         var args = ['build'];
         args = buildCmdLine(args, buildOpts);
         args.push(path.dirname(file.path));
-        
-        if (opts.debug) {
-            console.log('Running docker with args: %s', args.join(' '));
-        }
 
-        process.stdout.write(PLUGIN_NAME + ' Building docker image ' + file.path + '\n');        
+        process.stdout.write(PLUGIN_NAME + ' Building docker image ' + file.path + '\n');
 
-        var errorLog = '';
-        var proc = spawn('docker', args);
-
-        proc.stderr.on('data', function (data) {
-            errorLog += data;
-        });
-
-        proc.on('close', function (code) {
-            if (code !== 0) {
-                self.emit('error', new PluginError(PLUGIN_NAME, 'Docker exited with code ' + code + ': ' + errorLog));
-            }
-            // make sure the file goes through the next gulp plugin
-            self.push(file);
-            // tell the stream engine that we are done with this file
-            cb();
-        });
-
-
+        runDocker(args, opts.debug)
+            .then(function () {
+                // make sure the file goes through the next gulp plugin
+                self.push(file);
+                // tell the stream engine that we are done with this file
+                cb();
+            })
+            .catch(function (message) {
+                self.emit('error', new PluginError(PLUGIN_NAME, message));
+            });
     });
     
     return stream;
 }
+
 
 module.exports = buildImage;
